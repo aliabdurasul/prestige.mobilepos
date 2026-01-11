@@ -1774,6 +1774,9 @@ function closeReceiptModal() {
 }
 
 closeReceipt.onclick = closeReceiptModal;
+// ========================================
+// PAYMENT MODAL HANDLERS
+// ========================================
 cancelPayment.onclick = () => {
   paymentModal.classList.remove('show');
 };
@@ -1810,17 +1813,17 @@ async function completeSale(paymentType) {
     cart = [];
     updateCartUI();
     
-    // Close modals
+    // Close payment modal and cart modal
     paymentModal.classList.remove('show');
     cartModal.classList.remove('show');
     
-    // Show success
+    // Show receipt QR
+    await showReceiptModal(transaction);
+    
+    // Show success toast
     const paymentLabel = paymentType === 'cash' ? 'Nakit' : 'Kart';
     showToast(`✓ Satış tamamlandı (${paymentLabel})`, 'success');
     vibrate();
-    
-    // Resume scanner
-    resumeScanner();
     
   } catch (err) {
     console.error('Save transaction error:', err);
