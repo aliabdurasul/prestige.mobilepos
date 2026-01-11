@@ -977,33 +977,35 @@ function removeFromCart(index) {
 async function renderDailySummary() {
   const today = getTodayDateStr();
   const yesterday = getYesterdayDateStr();
-  const weekStart = getWeekStartDateStr();
   
   const todaySales = await getSalesByDate(today);
   const yesterdaySales = await getSalesByDate(yesterday);
-  const allSales = await getAllSales();
   
   // Calculate today's stats
   const todayTotal = todaySales.reduce((sum, sale) => sum + sale.total, 0);
   const todayCount = todaySales.length;
-  const todayCash = todaySales.filter(s => s.paymentType === 'cash').length;
-  const todayCard = todaySales.filter(s => s.paymentType === 'card').length;
   
-  // Calculate yesterday's total
+  // Calculate cash and card totals (payment type based)
+  const todayCashTotal = todaySales
+    .filter(s => s.paymentType === 'cash')
+    .reduce((sum, sale) => sum + sale.total, 0);
+  const todayCardTotal = todaySales
+    .filter(s => s.paymentType === 'card')
+    .reduce((sum, sale) => sum + sale.total, 0);
+  
+  // Calculate yesterday's total for comparison
   const yesterdayTotal = yesterdaySales.reduce((sum, sale) => sum + sale.total, 0);
-  
-  // Calculate week total
-  const weekSales = allSales.filter(sale => sale.date >= weekStart);
-  const weekTotal = weekSales.reduce((sum, sale) => sum + sale.total, 0);
   
   // Calculate comparison
   let comparison = '';
   if (yesterdayTotal > 0) {
     const diff = ((todayTotal - yesterdayTotal) / yesterdayTotal * 100).toFixed(0);
     if (diff > 0) {
-      comparison = `<span class="comparison positive">↑ Dünden %${diff} fazla</span>`;
+      comparison = `<span class="comparison positive">↑ %${diff}</span>`;
     } else if (diff < 0) {
-      comparison = `<span class="comparison negative">↓ Dünden %${Math.abs(diff)} az</span>`;
+      comparison = `<span class="comparison negative">↓ %${Math.abs(diff)}</span>`;
+    } else {
+      comparison = `<span class="stat-value">-</span>`;
     }
   }
   
@@ -1011,74 +1013,58 @@ async function renderDailySummary() {
     <div class="summary-hero">
       <div class="summary-date">${formatTurkishDate(today)}</div>
       <div class="summary-amount">₺${todayTotal.toFixed(2)}</div>
-      <div class="summary-count">${todayCount} satış tamamlandı</div>
+      <div class="summary-count">${todayCount} satış</div>
     </div>
     
     <div class="summary-section">
-      <div class="section-title">💵 Kasa Sayımı</div>
+      <div class="section-title">💳 Ödeme Dağılımı</div>
       
-      <div class="cash-row">
-        <div class="cash-label">200₺ ×</div>
-        <input type="number" class="cash-input" id="cash200" value="0" min="0" inputmode="numeric">
-        <div class="cash-result" id="result200">₺0</div>
+      <div class="stat-row">
+        <span class="stat-label">Nakit satışlar</span>
+        <span class="stat-value">₺${todayCashTotal.toFixed(2)}</span>
       </div>
       
-      <div class="cash-row">
-        <div class="cash-label">100₺ ×</div>
-        <input type="number" class="cash-input" id="cash100" value="0" min="0" inputmode="numeric">
-        <div class="cash-result" id="result100">₺0</div>
-      </div>
-      
-      <div class="cash-row">
-        <div class="cash-label">50₺ ×</div>
-        <input type="number" class="cash-input" id="cash50" value="0" min="0" inputmode="numeric">
-        <div class="cash-result" id="result50">₺0</div>
-      </div>
-      
-      <div class="cash-row">
-        <div class="cash-label">20₺ ×</div>
-        <input type="number" class="cash-input" id="cash20" value="0" min="0" inputmode="numeric">
-        <div class="cash-result" id="result20">₺0</div>
-      </div>
-      
-      <div class="cash-row">
-        <div class="cash-label">Bozuk</div>
-        <input type="number" class="cash-input" id="cashCoins" value="0" min="0" step="0.5" inputmode="decimal">
-        <div class="cash-result" id="resultCoins">₺0</div>
-      </div>
-      
-      <div class="cash-total">
-        <span>Toplam Nakit</span>
-        <span id="cashTotal">₺0.00</span>
-      </div>
-      
-      <div class="difference-row">
-        <span>Fark</span>
-        <span id="cashDifference" class="difference-positive">₺0.00</span>
+      <div class="stat-row">
+        <span class="stat-label">Kart satışlar</span>
+        <span class="stat-value">₺${todayCardTotal.toFixed(2)}</span>
       </div>
     </div>
     
     <div class="summary-section">
-      <div class="section-title">📊 İstatistikler</div>
+      <div class="section-title">💵 Kasa Kontrolü</div>
       
-      <div class="stat-row">
-        <span class="stat-label">Nakit satış</span>
-        <span class="stat-value">${todayCash} adet</span>
+      <div class="stat-row" style="margin-bottom: 16px;">
+        <span class="stat-label" style="font-weight: 600;">POS Nakit</span>
+        <span class="stat-value" style="font-size: 18px; color: #00ff88;">₺${todayCashTotal.toFixed(2)}</span>
       </div>
       
-      <div class="stat-row">
-        <span class="stat-label">Kart satış</span>
-        <span class="stat-value">${todayCard} adet</span>
+      <div style="margin-bottom: 12px;">
+        <label style="display: block; font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">
+          Kasa Sayılan Tutar
+        </label>
+        <input 
+          type="number" 
+          id="countedCash" 
+          class="input-field" 
+          placeholder="0.00" 
+          step="0.01"
+          inputmode="decimal"
+          style="height: 56px; font-size: 18px; text-align: center; font-weight: 600;"
+        >
       </div>
       
+      <div class="difference-row" id="differenceRow" style="display: none;">
+        <span style="font-weight: 600;">Fark</span>
+        <span id="cashDifference" class="difference-positive" style="font-size: 18px; font-weight: 700;">₺0.00</span>
+      </div>
+    </div>
+    
+    <div class="summary-section">
+      <div class="section-title">📊 Karşılaştırma</div>
+      
       <div class="stat-row">
-        <span class="stat-label">Dünkü satış</span>
+        <span class="stat-label">Dünkü ciro</span>
         <span class="stat-value">₺${yesterdayTotal.toFixed(2)} ${comparison}</span>
-      </div>
-      
-      <div class="stat-row">
-        <span class="stat-label">Bu hafta toplam</span>
-        <span class="stat-value">₺${weekTotal.toFixed(2)}</span>
       </div>
     </div>
     
@@ -1086,59 +1072,47 @@ async function renderDailySummary() {
       <button class="action-btn btn-primary" onclick="closeDaySummary()">
         ✓ Günü Kapat
       </button>
-      <button class="action-btn btn-secondary" onclick="closeSummaryModal()">
-        Geri Dön
+      <button class="action-btn btn-secondary" onclick="returnToScanner()">
+        Yeni Satış
       </button>
     </div>
   `;
   
-  // Attach cash counting event listeners
-  ['cash200', 'cash100', 'cash50', 'cash20', 'cashCoins'].forEach(id => {
-    const input = document.getElementById(id);
-    if (input) {
-      input.addEventListener('input', updateCashCount);
-    }
-  });
-  
-  // Initialize cash count
-  updateCashCount();
+  // Attach cash counting event listener
+  const countedInput = document.getElementById('countedCash');
+  if (countedInput) {
+    countedInput.addEventListener('input', () => updateSimpleCashCount(todayCashTotal));
+    countedInput.focus();
+  }
 }
 
-function updateCashCount() {
-  const cash200 = parseFloat(document.getElementById('cash200').value) || 0;
-  const cash100 = parseFloat(document.getElementById('cash100').value) || 0;
-  const cash50 = parseFloat(document.getElementById('cash50').value) || 0;
-  const cash20 = parseFloat(document.getElementById('cash20').value) || 0;
-  const cashCoins = parseFloat(document.getElementById('cashCoins').value) || 0;
-  
-  const result200 = cash200 * 200;
-  const result100 = cash100 * 100;
-  const result50 = cash50 * 50;
-  const result20 = cash20 * 20;
-  
-  document.getElementById('result200').textContent = `₺${result200}`;
-  document.getElementById('result100').textContent = `₺${result100}`;
-  document.getElementById('result50').textContent = `₺${result50}`;
-  document.getElementById('result20').textContent = `₺${result20}`;
-  document.getElementById('resultCoins').textContent = `₺${cashCoins.toFixed(2)}`;
-  
-  const total = result200 + result100 + result50 + result20 + cashCoins;
-  document.getElementById('cashTotal').textContent = `₺${total.toFixed(2)}`;
-  
-  // Calculate difference (assuming POS total is from sales)
-  const posTotal = parseFloat(document.querySelector('.summary-amount').textContent.replace('₺', '').replace(',', '')) || 0;
-  const diff = total - posTotal;
+// Simple cash reconciliation - just compare POS cash vs counted cash
+function updateSimpleCashCount(posCashTotal) {
+  const countedCash = parseFloat(document.getElementById('countedCash').value) || 0;
+  const diffRow = document.getElementById('differenceRow');
   const diffElement = document.getElementById('cashDifference');
   
-  if (diff === 0) {
-    diffElement.textContent = '✓ Tam';
-    diffElement.className = 'difference-positive';
-  } else if (diff > 0) {
-    diffElement.textContent = `+₺${diff.toFixed(2)}`;
-    diffElement.className = 'difference-positive';
+  // Only show difference if user entered something
+  if (countedCash > 0) {
+    diffRow.style.display = 'flex';
+    
+    const diff = countedCash - posCashTotal;
+    
+    if (Math.abs(diff) < 0.01) {
+      // Perfect match
+      diffElement.textContent = '✓ Tam';
+      diffElement.className = 'difference-positive';
+    } else if (diff > 0) {
+      // Extra cash
+      diffElement.textContent = `+₺${diff.toFixed(2)}`;
+      diffElement.className = 'difference-positive';
+    } else {
+      // Cash shortage
+      diffElement.textContent = `₺${diff.toFixed(2)}`;
+      diffElement.className = 'difference-negative';
+    }
   } else {
-    diffElement.textContent = `₺${diff.toFixed(2)}`;
-    diffElement.className = 'difference-negative';
+    diffRow.style.display = 'none';
   }
 }
 
