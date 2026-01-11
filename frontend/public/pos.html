@@ -1450,37 +1450,76 @@ closeCart.onclick = () => {
   resumeScanner();
 };
 
-checkoutBtn.onclick = async () => {
+checkoutBtn.onclick = () => {
   if (cart.length === 0) return;
   
   const total = cart.reduce((sum, item) => sum + item.price, 0);
   const itemCount = cart.length;
   
-  if (confirm(`${itemCount} ürün\nToplam: ₺${total.toFixed(2)}\n\nÖdemeyi onayla?`)) {
-    // Save sale to database
-    const sale = {
-      items: [...cart],
-      total: total,
-      itemCount: itemCount,
-      paymentType: 'cash', // Default to cash, could add selection later
-      date: getTodayDateStr(),
-      timestamp: new Date().toISOString()
-    };
-    
-    try {
-      await saveSale(sale);
-      cart = [];
-      updateCartUI();
-      cartModal.classList.remove('show');
-      showToast('✓ Satış tamamlandı', 'success');
-      vibrate();
-      resumeScanner();
-    } catch (err) {
-      console.error('Save sale error:', err);
-      showToast('Satış kaydedilemedi', 'warning');
-    }
-  }
+  // Store pending sale info
+  pendingSaleTotal = total;
+  
+  // Show payment modal
+  paymentTotal.textContent = `₺${total.toFixed(2)}`;
+  paymentModal.classList.add('show');
 };
+
+// ========================================
+// PAYMENT MODAL HANDLERS
+// ========================================
+cancelPayment.onclick = () => {
+  paymentModal.classList.remove('show');
+};
+
+paymentCash.onclick = () => {
+  completeSale('cash');
+};
+
+paymentCard.onclick = () => {
+  completeSale('card');
+};
+
+async function completeSale(paymentType) {
+  if (cart.length === 0) return;
+  
+  const total = cart.reduce((sum, item) => sum + item.price, 0);
+  const itemCount = cart.length;
+  
+  // Create transaction with all required fields
+  const transaction = {
+    businessDate: getCurrentBusinessDate(),
+    timestamp: new Date().toISOString(),
+    paymentType: paymentType,
+    items: [...cart],
+    total: total,
+    itemCount: itemCount,
+    closedDayId: null  // Will be set when day is closed
+  };
+  
+  try {
+    await saveTransaction(transaction);
+    
+    // Clear cart
+    cart = [];
+    updateCartUI();
+    
+    // Close modals
+    paymentModal.classList.remove('show');
+    cartModal.classList.remove('show');
+    
+    // Show success
+    const paymentLabel = paymentType === 'cash' ? 'Nakit' : 'Kart';
+    showToast(`✓ Satış tamamlandı (${paymentLabel})`, 'success');
+    vibrate();
+    
+    // Resume scanner
+    resumeScanner();
+    
+  } catch (err) {
+    console.error('Save transaction error:', err);
+    showToast('Satış kaydedilemedi', 'warning');
+  }
+}
 
 // ========================================
 // DAILY SUMMARY MODAL
