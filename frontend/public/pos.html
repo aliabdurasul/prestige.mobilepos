@@ -1718,6 +1718,14 @@ closeSummary.onclick = () => {
 // ========================================
 (async function init() {
   await initDB();
+  
+  // Initialize default settings if first run
+  const shopName = await getSetting('shopName');
+  if (!shopName) {
+    await setSetting('shopName', 'Prestige Market');
+    await setSetting('currency', '₺');
+  }
+  
   await seedProducts();
   await startScanner();
   updateCartUI();
