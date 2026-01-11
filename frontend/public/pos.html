@@ -962,14 +962,6 @@ function getYesterdayDateStr() {
   return yesterday.toISOString().split('T')[0];
 }
 
-function getWeekStartDateStr() {
-  const today = new Date();
-  const day = today.getDay();
-  const diff = today.getDate() - day + (day === 0 ? -6 : 1); // Monday
-  const monday = new Date(today.setDate(diff));
-  return monday.toISOString().split('T')[0];
-}
-
 function formatTurkishDate(dateStr) {
   const date = new Date(dateStr);
   const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
