@@ -1119,9 +1119,11 @@ const cancelPayment = document.getElementById('cancelPayment');
 
 // Receipt modal elements
 const receiptModal = document.getElementById('receiptModal');
-const closeReceipt = document.getElementById('closeReceipt');
+const qrModal = document.getElementById('qrModal');
+const closeQr = document.getElementById('closeQr');
 const receiptAmount = document.getElementById('receiptAmount');
 const receiptPayment = document.getElementById('receiptPayment');
+let currentTransaction = null; // Store for QR generation
 
 // ========================================
 // UI FUNCTIONS
