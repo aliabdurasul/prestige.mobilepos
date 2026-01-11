@@ -702,10 +702,10 @@ body {
 <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
 <script>
 // ========================================
-// DATABASE (IndexedDB)
+// DATABASE (IndexedDB) - Version 2
 // ========================================
 const DB_NAME = 'PrestigePOS';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 let db;
 
 function initDB() {
@@ -720,16 +720,45 @@ function initDB() {
     
     request.onupgradeneeded = (e) => {
       const database = e.target.result;
+      const oldVersion = e.oldVersion;
       
+      // Store 1: Products
       if (!database.objectStoreNames.contains('products')) {
         const productStore = database.createObjectStore('products', { keyPath: 'barcode' });
         productStore.createIndex('name', 'name', { unique: false });
       }
       
-      if (!database.objectStoreNames.contains('sales')) {
-        const salesStore = database.createObjectStore('sales', { keyPath: 'id', autoIncrement: true });
-        salesStore.createIndex('date', 'date', { unique: false });
-        salesStore.createIndex('timestamp', 'timestamp', { unique: false });
+      // Store 2: Transactions (renamed from 'sales')
+      if (!database.objectStoreNames.contains('transactions')) {
+        const txStore = database.createObjectStore('transactions', { keyPath: 'id', autoIncrement: true });
+        txStore.createIndex('businessDate', 'businessDate', { unique: false });
+        txStore.createIndex('timestamp', 'timestamp', { unique: false });
+        txStore.createIndex('paymentType', 'paymentType', { unique: false });
+        txStore.createIndex('closedDayId', 'closedDayId', { unique: false });
+      } else if (oldVersion < 2) {
+        // Migrate old 'sales' to 'transactions' with new fields
+        const txStore = e.currentTarget.transaction.objectStore('transactions');
+        if (!txStore.indexNames.contains('businessDate')) {
+          txStore.createIndex('businessDate', 'businessDate', { unique: false });
+        }
+        if (!txStore.indexNames.contains('paymentType')) {
+          txStore.createIndex('paymentType', 'paymentType', { unique: false });
+        }
+        if (!txStore.indexNames.contains('closedDayId')) {
+          txStore.createIndex('closedDayId', 'closedDayId', { unique: false });
+        }
+      }
+      
+      // Store 3: Closed Days (NEW)
+      if (!database.objectStoreNames.contains('closedDays')) {
+        const closedDaysStore = database.createObjectStore('closedDays', { keyPath: 'id', autoIncrement: true });
+        closedDaysStore.createIndex('businessDate', 'businessDate', { unique: true });
+        closedDaysStore.createIndex('closedAt', 'closedAt', { unique: false });
+      }
+      
+      // Store 4: Settings (NEW)
+      if (!database.objectStoreNames.contains('settings')) {
+        const settingsStore = database.createObjectStore('settings', { keyPath: 'key' });
       }
     };
   });
