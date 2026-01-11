@@ -1766,11 +1766,14 @@ async function completeSale(paymentType) {
     items: [...cart],
     total: total,
     itemCount: itemCount,
-    closedDayId: null  // Will be set when day is closed
+    closedDayId: null
   };
   
   try {
     await saveTransaction(transaction);
+    
+    // Store transaction for QR generation
+    currentTransaction = transaction;
     
     // Clear cart
     cart = [];
@@ -1780,8 +1783,10 @@ async function completeSale(paymentType) {
     paymentModal.classList.remove('show');
     cartModal.classList.remove('show');
     
-    // Show receipt QR
-    await showReceiptModal(transaction);
+    // Show success screen (NOT QR automatically)
+    receiptAmount.textContent = `₺${total.toFixed(2)}`;
+    receiptPayment.textContent = paymentType === 'cash' ? '💵 Nakit' : '💳 Kart';
+    receiptModal.classList.add('show');
     
     // Show success toast
     const paymentLabel = paymentType === 'cash' ? 'Nakit' : 'Kart';
