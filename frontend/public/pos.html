@@ -1086,26 +1086,33 @@ function removeFromCart(index) {
 // DAILY SUMMARY FUNCTIONS
 // ========================================
 async function renderDailySummary() {
-  const today = getTodayDateStr();
+  const businessDate = getCurrentBusinessDate();
   const yesterday = getYesterdayDateStr();
   
-  const todaySales = await getSalesByDate(today);
-  const yesterdaySales = await getSalesByDate(yesterday);
+  // Check if day is already closed
+  const isClosed = await isBusinessDateClosed(businessDate);
+  
+  // Get today's transactions
+  const todayTx = await getTransactionsByBusinessDate(businessDate);
+  const yesterdayTx = await getTransactionsByBusinessDate(yesterday);
   
   // Calculate today's stats
-  const todayTotal = todaySales.reduce((sum, sale) => sum + sale.total, 0);
-  const todayCount = todaySales.length;
+  const todayTotal = todayTx.reduce((sum, tx) => sum + tx.total, 0);
+  const todayCount = todayTx.length;
   
-  // Calculate cash and card totals (payment type based)
-  const todayCashTotal = todaySales
-    .filter(s => s.paymentType === 'cash')
-    .reduce((sum, sale) => sum + sale.total, 0);
-  const todayCardTotal = todaySales
-    .filter(s => s.paymentType === 'card')
-    .reduce((sum, sale) => sum + sale.total, 0);
+  // Calculate cash and card totals
+  const todayCashTotal = todayTx
+    .filter(tx => tx.paymentType === 'cash')
+    .reduce((sum, tx) => sum + tx.total, 0);
+  const todayCardTotal = todayTx
+    .filter(tx => tx.paymentType === 'card')
+    .reduce((sum, tx) => sum + tx.total, 0);
+  
+  const todayCashCount = todayTx.filter(tx => tx.paymentType === 'cash').length;
+  const todayCardCount = todayTx.filter(tx => tx.paymentType === 'card').length;
   
   // Calculate yesterday's total for comparison
-  const yesterdayTotal = yesterdaySales.reduce((sum, sale) => sum + sale.total, 0);
+  const yesterdayTotal = yesterdayTx.reduce((sum, tx) => sum + tx.total, 0);
   
   // Calculate comparison
   let comparison = '';
@@ -1120,9 +1127,17 @@ async function renderDailySummary() {
     }
   }
   
+  // Warning if day already closed
+  const closedWarning = isClosed ? 
+    `<div style="background: rgba(255,159,10,0.2); border: 1px solid #ff9f0a; border-radius: 12px; padding: 12px; margin-bottom: 16px; text-align: center;">
+      ⚠️ Bu gün kapatılmış
+    </div>` : '';
+  
   summaryContent.innerHTML = `
+    ${closedWarning}
+    
     <div class="summary-hero">
-      <div class="summary-date">${formatTurkishDate(today)}</div>
+      <div class="summary-date">${formatTurkishDate(businessDate)}</div>
       <div class="summary-amount">₺${todayTotal.toFixed(2)}</div>
       <div class="summary-count">${todayCount} satış</div>
     </div>
@@ -1132,12 +1147,12 @@ async function renderDailySummary() {
       
       <div class="stat-row">
         <span class="stat-label">Nakit satışlar</span>
-        <span class="stat-value">₺${todayCashTotal.toFixed(2)}</span>
+        <span class="stat-value">₺${todayCashTotal.toFixed(2)} <span style="color: rgba(255,255,255,0.5);">(${todayCashCount} adet)</span></span>
       </div>
       
       <div class="stat-row">
         <span class="stat-label">Kart satışlar</span>
-        <span class="stat-value">₺${todayCardTotal.toFixed(2)}</span>
+        <span class="stat-value">₺${todayCardTotal.toFixed(2)} <span style="color: rgba(255,255,255,0.5);">(${todayCardCount} adet)</span></span>
       </div>
     </div>
     
@@ -1151,22 +1166,48 @@ async function renderDailySummary() {
       
       <div style="margin-bottom: 12px;">
         <label style="display: block; font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">
-          Kasa Sayılan Tutar
+          Kasayı Sayın
         </label>
-        <input 
-          type="number" 
-          id="countedCash" 
-          class="input-field" 
-          placeholder="0.00" 
-          step="0.01"
-          inputmode="decimal"
-          style="height: 56px; font-size: 18px; text-align: center; font-weight: 600;"
-        >
+        
+        <div class="cash-row">
+          <div class="cash-label">200₺ ×</div>
+          <input type="number" class="cash-input" id="cash200" value="0" min="0" inputmode="numeric">
+          <div class="cash-result" id="result200">₺0</div>
+        </div>
+        
+        <div class="cash-row">
+          <div class="cash-label">100₺ ×</div>
+          <input type="number" class="cash-input" id="cash100" value="0" min="0" inputmode="numeric">
+          <div class="cash-result" id="result100">₺0</div>
+        </div>
+        
+        <div class="cash-row">
+          <div class="cash-label">50₺ ×</div>
+          <input type="number" class="cash-input" id="cash50" value="0" min="0" inputmode="numeric">
+          <div class="cash-result" id="result50">₺0</div>
+        </div>
+        
+        <div class="cash-row">
+          <div class="cash-label">20₺ ×</div>
+          <input type="number" class="cash-input" id="cash20" value="0" min="0" inputmode="numeric">
+          <div class="cash-result" id="result20">₺0</div>
+        </div>
+        
+        <div class="cash-row">
+          <div class="cash-label">Bozuk</div>
+          <input type="number" class="cash-input" id="cashCoins" value="0" min="0" step="0.5" inputmode="decimal">
+          <div class="cash-result" id="resultCoins">₺0</div>
+        </div>
+        
+        <div class="cash-total">
+          <span>Toplam Kasa</span>
+          <span id="cashTotal">₺0.00</span>
+        </div>
       </div>
       
-      <div class="difference-row" id="differenceRow" style="display: none;">
+      <div class="difference-row" id="differenceRow">
         <span style="font-weight: 600;">Fark</span>
-        <span id="cashDifference" class="difference-positive" style="font-size: 18px; font-weight: 700;">₺0.00</span>
+        <span id="cashDifference" class="difference-positive">₺0.00</span>
       </div>
     </div>
     
@@ -1180,7 +1221,7 @@ async function renderDailySummary() {
     </div>
     
     <div class="modal-footer">
-      <button class="action-btn btn-primary" onclick="closeDaySummary()">
+      <button class="action-btn btn-primary" onclick="closeDaySummary()" ${isClosed ? 'disabled' : ''}>
         ✓ Günü Kapat
       </button>
       <button class="action-btn btn-secondary" onclick="returnToScanner()">
@@ -1189,42 +1230,63 @@ async function renderDailySummary() {
     </div>
   `;
   
-  // Attach cash counting event listener
-  const countedInput = document.getElementById('countedCash');
-  if (countedInput) {
-    countedInput.addEventListener('input', () => updateSimpleCashCount(todayCashTotal));
-    countedInput.focus();
-  }
+  // Attach cash counting event listeners
+  ['cash200', 'cash100', 'cash50', 'cash20', 'cashCoins'].forEach(id => {
+    const input = document.getElementById(id);
+    if (input) {
+      input.addEventListener('input', () => updateCashCount(todayCashTotal));
+    }
+  });
+  
+  // Initialize cash count
+  updateCashCount(todayCashTotal);
 }
 
-// Simple cash reconciliation - just compare POS cash vs counted cash
-function updateSimpleCashCount(posCashTotal) {
-  const countedCash = parseFloat(document.getElementById('countedCash').value) || 0;
-  const diffRow = document.getElementById('differenceRow');
+// Bill counting with auto-calculation
+function updateCashCount(posCashTotal) {
+  const bills200 = parseInt(document.getElementById('cash200')?.value) || 0;
+  const bills100 = parseInt(document.getElementById('cash100')?.value) || 0;
+  const bills50 = parseInt(document.getElementById('cash50')?.value) || 0;
+  const bills20 = parseInt(document.getElementById('cash20')?.value) || 0;
+  const coins = parseFloat(document.getElementById('cashCoins')?.value) || 0;
+  
+  const result200 = bills200 * 200;
+  const result100 = bills100 * 100;
+  const result50 = bills50 * 50;
+  const result20 = bills20 * 20;
+  
+  document.getElementById('result200').textContent = `₺${result200}`;
+  document.getElementById('result100').textContent = `₺${result100}`;
+  document.getElementById('result50').textContent = `₺${result50}`;
+  document.getElementById('result20').textContent = `₺${result20}`;
+  document.getElementById('resultCoins').textContent = `₺${coins.toFixed(2)}`;
+  
+  const countedTotal = result200 + result100 + result50 + result20 + coins;
+  document.getElementById('cashTotal').textContent = `₺${countedTotal.toFixed(2)}`;
+  
+  // Calculate difference
+  const diff = countedTotal - posCashTotal;
   const diffElement = document.getElementById('cashDifference');
   
-  // Only show difference if user entered something
-  if (countedCash > 0) {
-    diffRow.style.display = 'flex';
-    
-    const diff = countedCash - posCashTotal;
-    
-    if (Math.abs(diff) < 0.01) {
-      // Perfect match
-      diffElement.textContent = '✓ Tam';
-      diffElement.className = 'difference-positive';
-    } else if (diff > 0) {
-      // Extra cash
-      diffElement.textContent = `+₺${diff.toFixed(2)}`;
-      diffElement.className = 'difference-positive';
-    } else {
-      // Cash shortage
-      diffElement.textContent = `₺${diff.toFixed(2)}`;
-      diffElement.className = 'difference-negative';
-    }
+  if (Math.abs(diff) < 0.01) {
+    // Perfect match
+    diffElement.textContent = '✓ Tam';
+    diffElement.className = 'difference-positive';
+  } else if (diff > 0) {
+    // Extra cash
+    diffElement.textContent = `+₺${diff.toFixed(2)}`;
+    diffElement.className = 'difference-positive';
   } else {
-    diffRow.style.display = 'none';
+    // Shortage
+    diffElement.textContent = `₺${diff.toFixed(2)}`;
+    diffElement.className = 'difference-negative';
   }
+  
+  // Store values for closing
+  window.cashCountData = {
+    bills200, bills100, bills50, bills20, coins,
+    countedTotal, diff
+  };
 }
 
 function closeDaySummary() {
