@@ -1891,61 +1891,6 @@ closeSummary.onclick = () => {
   updateCartUI();
 })();
 
-// ========================================
-// QR AND NEW SALE FUNCTIONS
-// ========================================
-function showQRCode() {
-  if (!currentTransaction) {
-    showToast('Fiş bulunamadı', 'warning');
-    return;
-  }
-  
-  // Hide receipt modal and show QR modal
-  receiptModal.classList.remove('show');
-  showReceiptQR(currentTransaction);
-}
-
-async function showReceiptQR(transaction) {
-  try {
-    // Generate QR data URL
-    const qrData = await generateReceiptQR(transaction);
-    
-    // Clear previous QR
-    const qrContainer = document.getElementById('qrcode');
-    qrContainer.innerHTML = '';
-    
-    // Generate new QR code
-    new QRCode(qrContainer, {
-      text: qrData,
-      width: 250,
-      height: 250,
-      colorDark: "#000000",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.L
-    });
-    
-    // Show QR modal
-    qrModal.classList.add('show');
-    
-  } catch (err) {
-    console.error('Receipt QR error:', err);
-    showToast('QR oluşturulamadı', 'warning');
-  }
-}
-
-function startNewSale() {
-  // Clear current transaction
-  currentTransaction = null;
-  
-  // Close receipt modal
-  receiptModal.classList.remove('show');
-  
-  // Resume scanner
-  resumeScanner();
-  
-  showToast('Yeni satış için hazır', 'success');
-}
-
 // Expose for inline handlers
 window.removeFromCart = removeFromCart;
 window.closeDaySummary = closeDaySummary;
