@@ -1736,7 +1736,12 @@ function closeReceiptModal() {
   resumeScanner();
 }
 
-closeReceipt.onclick = closeReceiptModal;
+function closeQRModal() {
+  qrModal.classList.remove('show');
+  resumeScanner();
+}
+
+closeQr.onclick = closeQRModal;
 // ========================================
 // PAYMENT MODAL HANDLERS
 // ========================================
