@@ -1334,10 +1334,7 @@ async function closeDaySummary() {
   }
   
   // Get cash count data
-  const cashData = window.cashCountData || {
-    bills200: 0, bills100: 0, bills50: 0, bills20: 0, coins: 0,
-    countedTotal: 0, diff: 0
-  };
+  const cashData = window.cashCountData || { countedCash: 0, diff: 0 };
   
   // Get all transactions for this business date
   const transactions = await getTransactionsByBusinessDate(businessDate);
@@ -1371,23 +1368,15 @@ async function closeDaySummary() {
     }
   }
   
-  // Create closed day record
+  // Create closed day record (SIMPLIFIED)
   const closedDay = {
     businessDate: businessDate,
     totalSales: totalSales,
     cashTotal: cashTotal,
     cardTotal: cardTotal,
     transactionCount: transactionCount,
-    
-    // Cash reconciliation
-    bills200: cashData.bills200,
-    bills100: cashData.bills100,
-    bills50: cashData.bills50,
-    bills20: cashData.bills20,
-    coins: cashData.coins,
-    countedCash: cashData.countedTotal,
+    countedCash: cashData.countedCash,
     cashDifference: cashData.diff,
-    
     closedAt: new Date().toISOString(),
     closedBy: 'Owner'
   };
