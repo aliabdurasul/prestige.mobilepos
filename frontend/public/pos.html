@@ -1282,63 +1282,45 @@ async function renderDailySummary() {
     </div>
   `;
   
-  // Attach cash counting event listeners
-  ['cash200', 'cash100', 'cash50', 'cash20', 'cashCoins'].forEach(id => {
-    const input = document.getElementById(id);
-    if (input) {
-      input.addEventListener('input', () => updateCashCount(todayCashTotal));
-    }
-  });
-  
-  // Initialize cash count
-  updateCashCount(todayCashTotal);
+  // Attach simple cash counting event listener
+  const countedInput = document.getElementById('countedCash');
+  if (countedInput) {
+    countedInput.addEventListener('input', () => updateSimpleCashCount(todayCashTotal));
+    countedInput.focus();
+  }
 }
 
-// Bill counting with auto-calculation
-function updateCashCount(posCashTotal) {
-  const bills200 = parseInt(document.getElementById('cash200')?.value) || 0;
-  const bills100 = parseInt(document.getElementById('cash100')?.value) || 0;
-  const bills50 = parseInt(document.getElementById('cash50')?.value) || 0;
-  const bills20 = parseInt(document.getElementById('cash20')?.value) || 0;
-  const coins = parseFloat(document.getElementById('cashCoins')?.value) || 0;
-  
-  const result200 = bills200 * 200;
-  const result100 = bills100 * 100;
-  const result50 = bills50 * 50;
-  const result20 = bills20 * 20;
-  
-  document.getElementById('result200').textContent = `₺${result200}`;
-  document.getElementById('result100').textContent = `₺${result100}`;
-  document.getElementById('result50').textContent = `₺${result50}`;
-  document.getElementById('result20').textContent = `₺${result20}`;
-  document.getElementById('resultCoins').textContent = `₺${coins.toFixed(2)}`;
-  
-  const countedTotal = result200 + result100 + result50 + result20 + coins;
-  document.getElementById('cashTotal').textContent = `₺${countedTotal.toFixed(2)}`;
-  
-  // Calculate difference
-  const diff = countedTotal - posCashTotal;
+// Simple cash reconciliation - just compare POS cash vs counted cash
+function updateSimpleCashCount(posCashTotal) {
+  const countedCash = parseFloat(document.getElementById('countedCash')?.value) || 0;
+  const diffRow = document.getElementById('differenceRow');
   const diffElement = document.getElementById('cashDifference');
   
-  if (Math.abs(diff) < 0.01) {
-    // Perfect match
-    diffElement.textContent = '✓ Tam';
-    diffElement.className = 'difference-positive';
-  } else if (diff > 0) {
-    // Extra cash
-    diffElement.textContent = `+₺${diff.toFixed(2)}`;
-    diffElement.className = 'difference-positive';
+  // Only show difference if user entered something
+  if (countedCash > 0) {
+    diffRow.style.display = 'flex';
+    
+    const diff = countedCash - posCashTotal;
+    
+    if (Math.abs(diff) < 0.01) {
+      // Perfect match
+      diffElement.textContent = '✓ Tam';
+      diffElement.className = 'difference-positive';
+    } else if (diff > 0) {
+      // Extra cash
+      diffElement.textContent = `+₺${diff.toFixed(2)}`;
+      diffElement.className = 'difference-positive';
+    } else {
+      // Cash shortage
+      diffElement.textContent = `₺${diff.toFixed(2)}`;
+      diffElement.className = 'difference-negative';
+    }
+    
+    // Store for closing
+    window.cashCountData = { countedCash, diff };
   } else {
-    // Shortage
-    diffElement.textContent = `₺${diff.toFixed(2)}`;
-    diffElement.className = 'difference-negative';
+    diffRow.style.display = 'none';
   }
-  
-  // Store values for closing
-  window.cashCountData = {
-    bills200, bills100, bills50, bills20, coins,
-    countedTotal, diff
-  };
 }
 
 async function closeDaySummary() {
