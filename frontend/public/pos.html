@@ -1674,8 +1674,106 @@ checkoutBtn.onclick = () => {
 };
 
 // ========================================
-// PAYMENT MODAL HANDLERS
+// RECEIPT QR GENERATION
 // ========================================
+
+async function generateReceiptQR(transaction) {
+  const shopName = await getSetting('shopName') || 'Prestige Market';
+  const currency = await getSetting('currency') || '₺';
+  
+  // Get receipt number (count of today's transactions)
+  const todayTx = await getTransactionsByBusinessDate(transaction.businessDate);
+  const receiptNumber = todayTx.length;
+  
+  // Format date/time in Turkish
+  const date = new Date(transaction.timestamp);
+  const dateStr = date.toLocaleDateString('tr-TR');
+  const timeStr = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  
+  // Create compact receipt data
+  const receiptData = {
+    s: shopName,
+    d: `${dateStr} ${timeStr}`,
+    i: transaction.items.map(item => [item.name, item.price]),
+    t: transaction.total,
+    p: transaction.paymentType === 'cash' ? 'Nakit' : 'Kart',
+    n: `#${receiptNumber}`
+  };
+  
+  // Create full receipt HTML (embedded in QR)
+  const receiptHTML = `<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fiş ${receiptData.n}</title>
+<style>
+body{font-family:monospace;max-width:300px;margin:20px auto;background:#000;color:#fff;padding:20px}
+h2{text-align:center;border-bottom:2px solid #00ff88;padding-bottom:10px;margin-bottom:20px}
+.line{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed #333}
+.total{font-size:24px;font-weight:bold;color:#00ff88;text-align:center;margin:20px 0;padding:15px;background:rgba(0,255,136,0.1);border-radius:8px}
+.meta{text-align:center;color:#666;font-size:12px;margin-top:20px}
+</style>
+</head>
+<body>
+<h2>${receiptData.s}</h2>
+<div class="meta">${receiptData.d}</div>
+<div class="meta">Fiş ${receiptData.n}</div>
+<hr>
+${receiptData.i.map(item => `<div class="line"><span>${item[0]}</span><span>${currency}${item[1].toFixed(2)}</span></div>`).join('')}
+<div class="total">TOPLAM: ${currency}${receiptData.t.toFixed(2)}</div>
+<div class="meta">Ödeme: ${receiptData.p}</div>
+</body>
+</html>`;
+  
+  // Encode as data URL (works offline)
+  const base64HTML = btoa(unescape(encodeURIComponent(receiptHTML)));
+  const dataURL = `data:text/html;base64,${base64HTML}`;
+  
+  return dataURL;
+}
+
+async function showReceiptModal(transaction) {
+  try {
+    // Generate QR data URL
+    const qrData = await generateReceiptQR(transaction);
+    
+    // Generate QR code on canvas
+    await QRCode.toCanvas(qrCanvas, qrData, {
+      width: 250,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      }
+    });
+    
+    // Update receipt info
+    receiptAmount.textContent = `₺${transaction.total.toFixed(2)}`;
+    receiptPayment.textContent = transaction.paymentType === 'cash' ? '💵 Nakit' : '💳 Kart';
+    
+    // Show modal
+    receiptModal.classList.add('show');
+    
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+      if (receiptModal.classList.contains('show')) {
+        closeReceiptModal();
+      }
+    }, 5000);
+    
+  } catch (err) {
+    console.error('Receipt QR error:', err);
+    showToast('Fiş oluşturulamadı', 'warning');
+  }
+}
+
+function closeReceiptModal() {
+  receiptModal.classList.remove('show');
+  resumeScanner();
+}
+
+closeReceipt.onclick = closeReceiptModal;
 cancelPayment.onclick = () => {
   paymentModal.classList.remove('show');
 };
