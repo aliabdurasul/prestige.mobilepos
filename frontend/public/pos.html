@@ -1117,11 +1117,35 @@ function updateSimpleCashCount(posCashTotal) {
 }
 
 function closeDaySummary() {
+  const countedCash = parseFloat(document.getElementById('countedCash')?.value) || 0;
+  
+  if (countedCash === 0) {
+    if (!confirm('Kasa sayımı yapılmadı.\n\nYine de günü kapatmak istiyor musunuz?')) {
+      return;
+    }
+  }
+  
   if (confirm('Günü kapatmak istediğinize emin misiniz?\n\nBu işlem geri alınamaz.')) {
+    // Save day closing info to localStorage
+    const today = getTodayDateStr();
+    const closingInfo = {
+      date: today,
+      timestamp: new Date().toISOString(),
+      countedCash: countedCash
+    };
+    
+    localStorage.setItem(`day_closed_${today}`, JSON.stringify(closingInfo));
+    
     showToast('✓ Gün kapatıldı', 'success');
     summaryModal.classList.remove('show');
     resumeScanner();
   }
+}
+
+function returnToScanner() {
+  summaryModal.classList.remove('show');
+  resumeScanner();
+  showToast('Yeni satış için hazır', 'success');
 }
 
 function closeSummaryModal() {
