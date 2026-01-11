@@ -1786,6 +1786,11 @@ function startNewSale() {
   showToast('Yeni satış için hazır', 'success');
 }
 
+function closeReceiptModal() {
+  receiptModal.classList.remove('show');
+  resumeScanner();
+}
+
 function closeQRModal() {
   qrModal.classList.remove('show');
 }
