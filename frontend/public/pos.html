@@ -786,22 +786,53 @@ function addProduct(product) {
   });
 }
 
-function saveSale(sale) {
+// ========================================
+// BUSINESS DAY LOGIC
+// ========================================
+
+function getCurrentBusinessDate() {
+  // Get current active business date from localStorage
+  const stored = localStorage.getItem('currentBusinessDate');
+  
+  if (stored) {
+    return stored;
+  }
+  
+  // Create new business date (today)
+  const today = getTodayDateStr();
+  localStorage.setItem('currentBusinessDate', today);
+  return today;
+}
+
+function clearCurrentBusinessDate() {
+  localStorage.removeItem('currentBusinessDate');
+}
+
+async function isBusinessDateClosed(dateStr) {
+  const closedDay = await getClosedDayByDate(dateStr);
+  return closedDay !== null;
+}
+
+// ========================================
+// TRANSACTIONS (formerly 'sales')
+// ========================================
+
+function saveTransaction(transaction) {
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['sales'], 'readwrite');
-    const store = transaction.objectStore('sales');
-    const request = store.add(sale);
+    const tx = db.transaction(['transactions'], 'readwrite');
+    const store = tx.objectStore('transactions');
+    const request = store.add(transaction);
     
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 }
 
-function getSalesByDate(dateStr) {
+function getTransactionsByBusinessDate(dateStr) {
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['sales'], 'readonly');
-    const store = transaction.objectStore('sales');
-    const index = store.index('date');
+    const transaction = db.transaction(['transactions'], 'readonly');
+    const store = transaction.objectStore('transactions');
+    const index = store.index('businessDate');
     const request = index.getAll(dateStr);
     
     request.onsuccess = () => resolve(request.result);
@@ -809,13 +840,94 @@ function getSalesByDate(dateStr) {
   });
 }
 
-function getAllSales() {
+function getAllTransactions() {
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['sales'], 'readonly');
-    const store = transaction.objectStore('sales');
+    const transaction = db.transaction(['transactions'], 'readonly');
+    const store = transaction.objectStore('transactions');
     const request = store.getAll();
     
     request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function updateTransaction(id, updates) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['transactions'], 'readwrite');
+    const store = transaction.objectStore('transactions');
+    const getRequest = store.get(id);
+    
+    getRequest.onsuccess = () => {
+      const record = getRequest.result;
+      Object.assign(record, updates);
+      const updateRequest = store.put(record);
+      updateRequest.onsuccess = () => resolve(record);
+      updateRequest.onerror = () => reject(updateRequest.error);
+    };
+    getRequest.onerror = () => reject(getRequest.error);
+  });
+}
+
+// ========================================
+// CLOSED DAYS
+// ========================================
+
+function saveClosedDay(closedDay) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['closedDays'], 'readwrite');
+    const store = transaction.objectStore('closedDays');
+    const request = store.add(closedDay);
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function getClosedDayByDate(dateStr) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['closedDays'], 'readonly');
+    const store = transaction.objectStore('closedDays');
+    const index = store.index('businessDate');
+    const request = index.get(dateStr);
+    
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function getAllClosedDays() {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['closedDays'], 'readonly');
+    const store = transaction.objectStore('closedDays');
+    const request = store.getAll();
+    
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// ========================================
+// SETTINGS
+// ========================================
+
+function getSetting(key) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['settings'], 'readonly');
+    const store = transaction.objectStore('settings');
+    const request = store.get(key);
+    
+    request.onsuccess = () => resolve(request.result?.value || null);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function setSetting(key, value) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['settings'], 'readwrite');
+    const store = transaction.objectStore('settings');
+    const request = store.put({ key, value });
+    
+    request.onsuccess = () => resolve(value);
     request.onerror = () => reject(request.error);
   });
 }
