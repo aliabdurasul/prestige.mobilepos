@@ -708,26 +708,39 @@ body {
   </div>
 </div>
 
-<!-- RECEIPT QR MODAL -->
+<!-- RECEIPT SUCCESS MODAL -->
 <div class="modal" id="receiptModal">
   <div class="modal-header">
-    <div class="modal-title">Fiş</div>
-    <button class="close-btn" id="closeReceipt">×</button>
+    <div class="modal-title">Satış Tamamlandı</div>
+  </div>
+  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
+    <div style="font-size: 48px; margin-bottom: 20px;">✓</div>
+    <div id="receiptAmount" style="font-size: 32px; font-weight: 700; color: #00ff88; margin-bottom: 10px;">₺0.00</div>
+    <div id="receiptPayment" style="font-size: 16px; color: rgba(255,255,255,0.7); margin-bottom: 30px;">Nakit</div>
+  </div>
+  <div class="modal-footer" style="display: flex; flex-direction: column; gap: 12px;">
+    <button class="action-btn btn-primary" id="showQrBtn" onclick="showQRCode()">
+      QR Fiş Göster
+    </button>
+    <button class="action-btn btn-secondary" onclick="startNewSale()">
+      Yeni Satış
+    </button>
+  </div>
+</div>
+
+<!-- QR CODE MODAL -->
+<div class="modal" id="qrModal">
+  <div class="modal-header">
+    <div class="modal-title">QR Fiş</div>
+    <button class="close-btn" id="closeQr">×</button>
   </div>
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
     <div style="background: #fff; padding: 20px; border-radius: 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
       <div id="qrcode"></div>
     </div>
-    <div style="text-align: center; color: rgba(255,255,255,0.7); font-size: 14px; margin-bottom: 20px;">
+    <div style="text-align: center; color: rgba(255,255,255,0.7); font-size: 14px;">
       Müşteri bu QR'ı taratabilir
     </div>
-    <div id="receiptAmount" style="font-size: 32px; font-weight: 700; color: #00ff88; margin-bottom: 10px;">₺0.00</div>
-    <div id="receiptPayment" style="font-size: 16px; color: rgba(255,255,255,0.7);">Nakit</div>
-  </div>
-  <div class="modal-footer">
-    <button class="action-btn btn-primary" onclick="closeReceiptModal()">
-      Kapat
-    </button>
   </div>
 </div>
 
