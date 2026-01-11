@@ -1337,29 +1337,97 @@ function updateCashCount(posCashTotal) {
   };
 }
 
-function closeDaySummary() {
-  const countedCash = parseFloat(document.getElementById('countedCash')?.value) || 0;
+async function closeDaySummary() {
+  const businessDate = getCurrentBusinessDate();
   
-  if (countedCash === 0) {
-    if (!confirm('Kasa sayımı yapılmadı.\n\nYine de günü kapatmak istiyor musunuz?')) {
+  // Check if already closed
+  const alreadyClosed = await isBusinessDateClosed(businessDate);
+  if (alreadyClosed) {
+    showToast('Bu gün zaten kapatılmış', 'warning');
+    return;
+  }
+  
+  // Get cash count data
+  const cashData = window.cashCountData || {
+    bills200: 0, bills100: 0, bills50: 0, bills20: 0, coins: 0,
+    countedTotal: 0, diff: 0
+  };
+  
+  // Get all transactions for this business date
+  const transactions = await getTransactionsByBusinessDate(businessDate);
+  
+  if (transactions.length === 0) {
+    if (!confirm('Bugün hiç satış yapılmadı.\n\nYine de günü kapatmak istiyor musunuz?')) {
       return;
     }
   }
   
-  if (confirm('Günü kapatmak istediğinize emin misiniz?\n\nBu işlem geri alınamaz.')) {
-    // Save day closing info to localStorage
-    const today = getTodayDateStr();
-    const closingInfo = {
-      date: today,
-      timestamp: new Date().toISOString(),
-      countedCash: countedCash
-    };
+  // Calculate totals
+  const totalSales = transactions.reduce((sum, tx) => sum + tx.total, 0);
+  const cashTotal = transactions.filter(tx => tx.paymentType === 'cash')
+                                .reduce((sum, tx) => sum + tx.total, 0);
+  const cardTotal = transactions.filter(tx => tx.paymentType === 'card')
+                                .reduce((sum, tx) => sum + tx.total, 0);
+  const transactionCount = transactions.length;
+  
+  // Check for cash difference
+  if (Math.abs(cashData.diff) > 0.01 && cashTotal > 0) {
+    const diffMsg = cashData.diff < 0 ? 
+      `Kasada eksik var (₺${Math.abs(cashData.diff).toFixed(2)})` :
+      `Kasada fazla var (+₺${cashData.diff.toFixed(2)})`;
     
-    localStorage.setItem(`day_closed_${today}`, JSON.stringify(closingInfo));
+    if (!confirm(`${diffMsg}\n\nGünü kapatmak istediğinize emin misiniz?`)) {
+      return;
+    }
+  } else {
+    if (!confirm('Günü kapatmak istediğinize emin misiniz?\n\nBu işlem geri alınamaz.')) {
+      return;
+    }
+  }
+  
+  // Create closed day record
+  const closedDay = {
+    businessDate: businessDate,
+    totalSales: totalSales,
+    cashTotal: cashTotal,
+    cardTotal: cardTotal,
+    transactionCount: transactionCount,
     
+    // Cash reconciliation
+    bills200: cashData.bills200,
+    bills100: cashData.bills100,
+    bills50: cashData.bills50,
+    bills20: cashData.bills20,
+    coins: cashData.coins,
+    countedCash: cashData.countedTotal,
+    cashDifference: cashData.diff,
+    
+    closedAt: new Date().toISOString(),
+    closedBy: 'Owner'
+  };
+  
+  try {
+    // Save closed day record
+    const closedDayId = await saveClosedDay(closedDay);
+    
+    // Update all transactions for this day to link them to closed day
+    for (const tx of transactions) {
+      await updateTransaction(tx.id, { closedDayId: closedDayId });
+    }
+    
+    // Clear current business date (next sale creates new day)
+    clearCurrentBusinessDate();
+    
+    // Show success
     showToast('✓ Gün kapatıldı', 'success');
+    
+    // Close modal and return to scanner
     summaryModal.classList.remove('show');
     resumeScanner();
+    
+  } catch (err) {
+    console.error('Close day error:', err);
+    showToast('Gün kapatılamadı', 'warning');
   }
 }
 
