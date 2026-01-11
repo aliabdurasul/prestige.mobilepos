@@ -1244,48 +1244,22 @@ async function renderDailySummary() {
       
       <div style="margin-bottom: 12px;">
         <label style="display: block; font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">
-          Kasayı Sayın
+          Kasa Sayılan Tutar
         </label>
-        
-        <div class="cash-row">
-          <div class="cash-label">200₺ ×</div>
-          <input type="number" class="cash-input" id="cash200" value="0" min="0" inputmode="numeric">
-          <div class="cash-result" id="result200">₺0</div>
-        </div>
-        
-        <div class="cash-row">
-          <div class="cash-label">100₺ ×</div>
-          <input type="number" class="cash-input" id="cash100" value="0" min="0" inputmode="numeric">
-          <div class="cash-result" id="result100">₺0</div>
-        </div>
-        
-        <div class="cash-row">
-          <div class="cash-label">50₺ ×</div>
-          <input type="number" class="cash-input" id="cash50" value="0" min="0" inputmode="numeric">
-          <div class="cash-result" id="result50">₺0</div>
-        </div>
-        
-        <div class="cash-row">
-          <div class="cash-label">20₺ ×</div>
-          <input type="number" class="cash-input" id="cash20" value="0" min="0" inputmode="numeric">
-          <div class="cash-result" id="result20">₺0</div>
-        </div>
-        
-        <div class="cash-row">
-          <div class="cash-label">Bozuk</div>
-          <input type="number" class="cash-input" id="cashCoins" value="0" min="0" step="0.5" inputmode="decimal">
-          <div class="cash-result" id="resultCoins">₺0</div>
-        </div>
-        
-        <div class="cash-total">
-          <span>Toplam Kasa</span>
-          <span id="cashTotal">₺0.00</span>
-        </div>
+        <input 
+          type="number" 
+          id="countedCash" 
+          class="input-field" 
+          placeholder="0.00" 
+          step="0.01"
+          inputmode="decimal"
+          style="height: 56px; font-size: 18px; text-align: center; font-weight: 600;"
+        >
       </div>
       
-      <div class="difference-row" id="differenceRow">
+      <div class="difference-row" id="differenceRow" style="display: none;">
         <span style="font-weight: 600;">Fark</span>
-        <span id="cashDifference" class="difference-positive">₺0.00</span>
+        <span id="cashDifference" class="difference-positive" style="font-size: 18px; font-weight: 700;">₺0.00</span>
       </div>
     </div>
     
