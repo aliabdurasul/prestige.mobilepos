@@ -4,10 +4,12 @@
 Mobile-first, offline-first Point of Sale (POS) Progressive Web App (PWA) for small shops in Türkiye and Uzbekistan.
 
 ## Tech Stack
-- **Frontend:** Vanilla JavaScript, HTML, CSS (single file)
+- **Frontend:** Vanilla JavaScript, HTML, CSS
 - **Database:** IndexedDB (browser-based, offline)
 - **Backend:** None (100% offline)
-- **Location:** `/app/frontend/public/pos.html`
+- **Files:**
+  - `/app/frontend/public/pos.html` - Main POS app
+  - `/app/frontend/public/receipt.html` - Standalone receipt viewer (QR target)
 
 ## Core Features
 
@@ -28,9 +30,12 @@ Mobile-first, offline-first Point of Sale (POS) Progressive Web App (PWA) for sm
    - Payment type saved with transaction
 
 4. **Receipt System**
-   - Text-based receipt summary after sale
-   - Optional QR code generation with full receipt data
-   - QR stays visible until manually closed
+   - Text-based receipt summary shown after sale
+   - Optional QR code button ("QR ile Fiş Göster")
+   - QR contains URL: `/receipt.html?id=TRANSACTION_ID`
+   - Separate `receipt.html` page loads transaction from IndexedDB
+   - Both receipt and QR screens have "Yeni Satış" button
+   - Fully offline - QR URLs work without backend
 
 5. **Daily Summary (Gün Sonu)**
    - Total sales for business day
@@ -71,4 +76,4 @@ Mobile-first, offline-first Point of Sale (POS) Progressive Web App (PWA) for sm
 - QR code data limited by QR capacity (~2KB practical limit)
 
 ## Last Updated
-January 13, 2026 - All critical bug fixes completed and verified
+January 13, 2026 - Fixed QR UX (URL-based), receipt flow, and day closing logic
