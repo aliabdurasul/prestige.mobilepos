@@ -1780,22 +1780,22 @@ async function showQRCode() {
 }
 
 async function showQRFromReceipt() {
-  if (!currentTransaction) {
+  if (!currentTransaction || !currentTransaction.id) {
     showToast('Fiş bulunamadı', 'warning');
     return;
   }
   
   try {
-    // Generate QR data as JSON string
-    const qrData = await generateReceiptQR(currentTransaction);
+    // Generate URL pointing to receipt page
+    const receiptUrl = `${window.location.origin}/receipt.html?id=${currentTransaction.id}`;
     
     // Clear previous QR
     const qrContainer = document.getElementById('qrcode');
     qrContainer.innerHTML = '';
     
-    // Generate QR code with JSON data
+    // Generate QR code with URL
     new QRCode(qrContainer, {
-      text: qrData,
+      text: receiptUrl,
       width: 250,
       height: 250,
       colorDark: "#000000",
