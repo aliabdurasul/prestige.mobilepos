@@ -1826,6 +1826,14 @@ async function showQRCode() {
   }
 }
 
+function showQRFromReceipt() {
+  if (!currentTransaction) {
+    showToast('Fiş bulunamadı', 'warning');
+    return;
+  }
+  showQRCode();
+}
+
 function startNewSale() {
   // Clear current transaction
   currentTransaction = null;
