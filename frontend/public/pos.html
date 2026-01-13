@@ -1850,12 +1850,18 @@ async function showQRCode() {
     receiptModal.classList.remove('show');
     qrModal.classList.add('show');
     
-    // NO AUTO-CLOSE - stays open until user closes
-    
   } catch (err) {
     console.error('Receipt QR error:', err);
     showToast('QR oluşturulamadı', 'warning');
   }
+}
+
+function showQRFromReceipt() {
+  if (!currentTransaction) {
+    showToast('Fiş bulunamadı', 'warning');
+    return;
+  }
+  showQRCode();
 }
 
 function showQRFromReceipt() {
