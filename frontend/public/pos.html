@@ -708,22 +708,41 @@ body {
   </div>
 </div>
 
-<!-- RECEIPT SUCCESS MODAL -->
+<!-- RECEIPT SUMMARY MODAL -->
 <div class="modal" id="receiptModal">
   <div class="modal-header">
-    <div class="modal-title">Satış Tamamlandı</div>
+    <div class="modal-title">Fiş</div>
   </div>
-  <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
-    <div style="font-size: 48px; margin-bottom: 20px;">✓</div>
-    <div id="receiptAmount" style="font-size: 32px; font-weight: 700; color: #00ff88; margin-bottom: 10px;">₺0.00</div>
-    <div id="receiptPayment" style="font-size: 16px; color: rgba(255,255,255,0.7); margin-bottom: 30px;">Nakit</div>
+  <div class="modal-content" style="padding: 20px;">
+    <!-- Receipt Summary -->
+    <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+      <div style="text-align: center; margin-bottom: 16px;">
+        <div style="font-size: 18px; font-weight: 700; margin-bottom: 8px;" id="receiptShopName">Prestige Market</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.6);" id="receiptDateTime">11.01.2026 — 18:42</div>
+      </div>
+      
+      <div style="border-top: 1px dashed rgba(255,255,255,0.2); border-bottom: 1px dashed rgba(255,255,255,0.2); padding: 12px 0; margin-bottom: 12px;" id="receiptItems">
+        <!-- Items populated by JS -->
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: 700; margin-bottom: 8px;">
+        <span>Toplam:</span>
+        <span style="color: #00ff88;" id="receiptTotal">₺0.00</span>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; font-size: 14px; color: rgba(255,255,255,0.7);">
+        <span>Ödeme:</span>
+        <span id="receiptPayment">Nakit</span>
+      </div>
+    </div>
   </div>
+  
   <div class="modal-footer" style="display: flex; flex-direction: column; gap: 12px;">
-    <button class="action-btn btn-primary" id="showQrBtn" onclick="showQRCode()">
-      QR Fiş Göster
+    <button class="action-btn btn-secondary" id="showQrBtn" onclick="showQRFromReceipt()">
+      🧾 QR ile Fiş Göster
     </button>
-    <button class="action-btn btn-secondary" onclick="startNewSale()">
-      Yeni Satış
+    <button class="action-btn btn-primary" onclick="startNewSale()">
+      ✅ Yeni Satış
     </button>
   </div>
 </div>
@@ -735,7 +754,7 @@ body {
     <button class="close-btn" id="closeQr">×</button>
   </div>
   <div class="modal-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px;">
-    <div style="background: #fff; padding: 20px; border-radius: 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
+    <div style="background: #fff; padding: 20px; border-radius: 16px; margin-bottom: 20px;">
       <div id="qrcode"></div>
     </div>
     <div style="text-align: center; color: rgba(255,255,255,0.7); font-size: 14px;">
