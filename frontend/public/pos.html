@@ -1424,17 +1424,15 @@ async function closeDaySummary() {
       await updateTransaction(tx.id, { closedDayId: closedDayId });
     }
     
-    // CRITICAL FIX: Clear current business date and create new one
-    clearCurrentBusinessDate();
+    // CRITICAL FIX: Clear old business date
+    localStorage.removeItem('currentBusinessDate');
     
-    // Force new business date creation for tomorrow
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const newBusinessDate = tomorrow.toISOString().split('T')[0];
-    localStorage.setItem('currentBusinessDate', newBusinessDate);
+    // CRITICAL FIX: Force UI reset - set NEW business date to TODAY
+    const today = getTodayDateStr();
+    localStorage.setItem('currentBusinessDate', today);
     
     // Show success
-    showToast('✓ Gün kapatıldı. Yeni gün hazır.', 'success');
+    showToast('✓ Gün kapatıldı. Yeni gün başladı.', 'success');
     
     // Close modal and return to scanner
     summaryModal.classList.remove('show');
