@@ -1819,12 +1819,38 @@ async function showQRCode() {
   }
 }
 
-function showQRFromReceipt() {
+async function showQRFromReceipt() {
   if (!currentTransaction) {
     showToast('Fiş bulunamadı', 'warning');
     return;
   }
-  showQRCode();
+  
+  try {
+    // Generate QR data as JSON string
+    const qrData = await generateReceiptQR(currentTransaction);
+    
+    // Clear previous QR
+    const qrContainer = document.getElementById('qrcode');
+    qrContainer.innerHTML = '';
+    
+    // Generate QR code with JSON data
+    new QRCode(qrContainer, {
+      text: qrData,
+      width: 250,
+      height: 250,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.L
+    });
+    
+    // Hide receipt and show QR
+    receiptModal.classList.remove('show');
+    qrModal.classList.add('show');
+    
+  } catch (err) {
+    console.error('QR generation error:', err);
+    showToast('QR oluşturulamadı', 'warning');
+  }
 }
 
 function showQRFromReceipt() {
