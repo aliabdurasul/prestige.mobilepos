@@ -1875,11 +1875,16 @@ async function completeSale(paymentType) {
   };
   
   try {
-    // Save to IndexedDB
-    await saveTransaction(transaction);
+    // Save to IndexedDB and get the ID
+    const txId = await saveTransaction(transaction);
     
-    // CRITICAL: Store in memory for receipt and QR
+    // Store transaction with ID for QR generation
+    transaction.id = txId;
     currentTransaction = transaction;
+    
+    // Clear cart NOW (before showing receipt)
+    cart = [];
+    updateCartUI();
     
     // Close payment and cart modals
     paymentModal.classList.remove('show');
