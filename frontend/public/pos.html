@@ -1699,39 +1699,6 @@ async function showReceiptSummary(transaction) {
 // ========================================
 // QR AND NEW SALE FUNCTIONS
 // ========================================
-async function showQRCode() {
-  if (!currentTransaction) {
-    showToast('Fiş bulunamadı', 'warning');
-    return;
-  }
-  
-  try {
-    // Generate QR data URL
-    const qrData = await generateReceiptQR(currentTransaction);
-    
-    // Clear previous QR
-    const qrContainer = document.getElementById('qrcode');
-    qrContainer.innerHTML = '';
-    
-    // Generate new QR code
-    new QRCode(qrContainer, {
-      text: qrData,
-      width: 250,
-      height: 250,
-      colorDark: "#000000",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.L
-    });
-    
-    // Hide receipt modal and show QR modal
-    receiptModal.classList.remove('show');
-    qrModal.classList.add('show');
-    
-  } catch (err) {
-    console.error('Receipt QR error:', err);
-    showToast('QR oluşturulamadı', 'warning');
-  }
-}
 
 async function showQRFromReceipt() {
   if (!currentTransaction || !currentTransaction.id) {
