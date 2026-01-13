@@ -1826,9 +1826,12 @@ function startNewSale() {
   cart = [];
   updateCartUI();
   
-  // Close all modals
+  // Close ALL modals
   receiptModal.classList.remove('show');
   qrModal.classList.remove('show');
+  cartModal.classList.remove('show');
+  paymentModal.classList.remove('show');
+  summaryModal.classList.remove('show');
   
   // Resume scanner
   resumeScanner();
