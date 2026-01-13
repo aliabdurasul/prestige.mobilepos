@@ -1661,61 +1661,8 @@ checkoutBtn.onclick = () => {
 };
 
 // ========================================
-// RECEIPT QR GENERATION
+// RECEIPT FUNCTIONS
 // ========================================
-
-async function generateReceiptQR(transaction) {
-  const shopName = await getSetting('shopName') || 'Prestige Market';
-  
-  // Create receipt data as JSON
-  const receiptData = {
-    shop: shopName,
-    date: transaction.timestamp,
-    items: transaction.items.map(item => ({
-      name: item.name,
-      price: item.price
-    })),
-    total: transaction.total,
-    payment: transaction.paymentType === 'cash' ? 'Nakit' : 'Kart'
-  };
-  
-  // Return JSON string directly (not data URL)
-  return JSON.stringify(receiptData);
-}
-
-async function showReceiptModal(transaction) {
-  try {
-    // Generate QR data URL
-    const qrData = await generateReceiptQR(transaction);
-    
-    // Clear previous QR
-    const qrContainer = document.getElementById('qrcode');
-    qrContainer.innerHTML = '';
-    
-    // Generate new QR code
-    new QRCode(qrContainer, {
-      text: qrData,
-      width: 250,
-      height: 250,
-      colorDark: "#000000",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.L
-    });
-    
-    // Update receipt info
-    receiptAmount.textContent = `₺${transaction.total.toFixed(2)}`;
-    receiptPayment.textContent = transaction.paymentType === 'cash' ? '💵 Nakit' : '💳 Kart';
-    
-    // Show modal
-    receiptModal.classList.add('show');
-    
-    // NO AUTO-CLOSE - removed setTimeout
-    
-  } catch (err) {
-    console.error('Receipt QR error:', err);
-    showToast('Fiş oluşturulamadı', 'warning');
-  }
-}
 
 async function showReceiptSummary(transaction) {
   try {
