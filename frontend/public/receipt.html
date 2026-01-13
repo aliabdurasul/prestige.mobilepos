@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<title>Fiş - Prestige.POS</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #000;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.receipt-container {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.receipt-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.shop-name {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.receipt-date {
+  font-size: 14px;
+  color: rgba(255,255,255,0.6);
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.divider {
+  border-top: 1px dashed rgba(255,255,255,0.2);
+  margin: 16px 0;
+}
+
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 15px;
+}
+
+.item-name {
+  flex: 1;
+}
+
+.item-price {
+  font-weight: 600;
+  color: #00ff88;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 22px;
+  font-weight: 700;
+  padding-top: 16px;
+}
+
+.total-amount {
+  color: #00ff88;
+}
+
+.payment-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+  margin-top: 8px;
+}
+
+.action-btn {
+  width: 100%;
+  height: 54px;
+  border: none;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+  color: #000;
+}
+
+.btn-secondary {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+.error-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(255,255,255,0.5);
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(255,255,255,0.7);
+}
+</style>
+</head>
+<body>
+
+<div class="receipt-container">
+  <div id="content">
+    <div class="loading">Yükleniyor...</div>
+  </div>
+</div>
+
+<script>
+const DB_NAME = 'PrestigePOS';
+const DB_VERSION = 2;
+let db;
+
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      db = request.result;
+      resolve(db);
+    };
+    request.onupgradeneeded = (e) => {
+      // Same schema as main app
+      const database = e.target.result;
+      if (!database.objectStoreNames.contains('products')) {
+        database.createObjectStore('products', { keyPath: 'barcode' });
+      }
+      if (!database.objectStoreNames.contains('transactions')) {
+        const txStore = database.createObjectStore('transactions', { keyPath: 'id', autoIncrement: true });
+        txStore.createIndex('businessDate', 'businessDate', { unique: false });
+        txStore.createIndex('timestamp', 'timestamp', { unique: false });
+        txStore.createIndex('paymentType', 'paymentType', { unique: false });
+        txStore.createIndex('closedDayId', 'closedDayId', { unique: false });
+      }
+      if (!database.objectStoreNames.contains('closedDays')) {
+        const closedDaysStore = database.createObjectStore('closedDays', { keyPath: 'id', autoIncrement: true });
+        closedDaysStore.createIndex('businessDate', 'businessDate', { unique: true });
+      }
+      if (!database.objectStoreNames.contains('settings')) {
+        database.createObjectStore('settings', { keyPath: 'key' });
+      }
+    };
+  });
+}
+
+function getTransaction(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(['transactions'], 'readonly');
+    const store = tx.objectStore('transactions');
+    const request = store.get(id);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function getSetting(key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(['settings'], 'readonly');
+    const store = tx.objectStore('settings');
+    const request = store.get(key);
+    request.onsuccess = () => resolve(request.result?.value || null);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function renderReceipt(transaction, shopName) {
+  const date = new Date(transaction.timestamp);
+  const dateStr = date.toLocaleDateString('tr-TR');
+  const timeStr = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  
+  const itemsHtml = transaction.items.map(item => `
+    <div class="item-row">
+      <span class="item-name">${item.name}</span>
+      <span class="item-price">₺${item.price.toFixed(2)}</span>
+    </div>
+  `).join('');
+  
+  const paymentLabel = transaction.paymentType === 'cash' ? '💵 Nakit' : '💳 Kart';
+  
+  document.getElementById('content').innerHTML = `
+    <div class="receipt-card">
+      <div class="shop-name">${shopName}</div>
+      <div class="receipt-date">${dateStr} — ${timeStr}</div>
+      
+      <div class="divider"></div>
+      
+      ${itemsHtml}
+      
+      <div class="divider"></div>
+      
+      <div class="total-row">
+        <span>Toplam:</span>
+        <span class="total-amount">₺${transaction.total.toFixed(2)}</span>
+      </div>
+      
+      <div class="payment-row">
+        <span>Ödeme:</span>
+        <span>${paymentLabel}</span>
+      </div>
+    </div>
+    
+    <button class="action-btn btn-primary" onclick="goToNewSale()">
+      ✅ Yeni Satış
+    </button>
+    
+    <button class="action-btn btn-secondary" onclick="window.close()">
+      Kapat
+    </button>
+  `;
+}
+
+function renderError(message) {
+  document.getElementById('content').innerHTML = `
+    <div class="error-state">
+      <div class="error-icon">⚠️</div>
+      <div>${message}</div>
+    </div>
+    
+    <button class="action-btn btn-primary" onclick="goToNewSale()">
+      ✅ Yeni Satış
+    </button>
+  `;
+}
+
+function goToNewSale() {
+  window.location.href = '/pos.html';
+}
+
+async function init() {
+  try {
+    // Get transaction ID from URL
+    const params = new URLSearchParams(window.location.search);
+    const txId = parseInt(params.get('id'));
+    
+    if (!txId) {
+      renderError('Fiş bulunamadı');
+      return;
+    }
+    
+    // Init DB and load transaction
+    await initDB();
+    
+    const transaction = await getTransaction(txId);
+    if (!transaction) {
+      renderError('Fiş bulunamadı');
+      return;
+    }
+    
+    const shopName = await getSetting('shopName') || 'Prestige Market';
+    renderReceipt(transaction, shopName);
+    
+  } catch (err) {
+    console.error('Receipt load error:', err);
+    renderError('Fiş yüklenemedi');
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>
