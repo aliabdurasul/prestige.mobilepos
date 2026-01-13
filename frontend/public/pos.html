@@ -1852,25 +1852,20 @@ async function completeSale(paymentType) {
   };
   
   try {
+    // Save to IndexedDB
     await saveTransaction(transaction);
     
-    // Store transaction for QR generation
+    // CRITICAL: Store in memory for receipt and QR
     currentTransaction = transaction;
     
-    // Clear cart
-    cart = [];
-    updateCartUI();
-    
-    // Close payment modal and cart modal
+    // Close payment and cart modals
     paymentModal.classList.remove('show');
     cartModal.classList.remove('show');
     
-    // Show success screen (NOT QR automatically)
-    receiptAmount.textContent = `₺${total.toFixed(2)}`;
-    receiptPayment.textContent = paymentType === 'cash' ? '💵 Nakit' : '💳 Kart';
-    receiptModal.classList.add('show');
+    // Show RECEIPT SUMMARY (not QR)
+    await showReceiptSummary(transaction);
     
-    // Show success toast
+    // Success toast
     const paymentLabel = paymentType === 'cash' ? 'Nakit' : 'Kart';
     showToast(`✓ Satış tamamlandı (${paymentLabel})`, 'success');
     vibrate();
