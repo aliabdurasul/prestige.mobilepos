@@ -1431,14 +1431,16 @@ async function closeDaySummary() {
       await updateTransaction(tx.id, { closedDayId: closedDayId });
     }
     
-    // CRITICAL FIX: Clear business date (next sale creates new one)
+    // CRITICAL: Clear business date so next sale creates new date
     localStorage.removeItem('currentBusinessDate');
     
     // Show success
-    showToast('✓ Gün kapatıldı. Yeni gün başladı.', 'success');
+    showToast('✓ Gün kapatıldı', 'success');
     
-    // Close modal and return to scanner
+    // Close modal
     summaryModal.classList.remove('show');
+    
+    // Resume scanner
     resumeScanner();
     
   } catch (err) {
