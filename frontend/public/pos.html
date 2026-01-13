@@ -1751,6 +1751,42 @@ async function showReceiptModal(transaction) {
   }
 }
 
+async function showReceiptSummary(transaction) {
+  try {
+    // Clear cart
+    cart = [];
+    updateCartUI();
+    
+    // Populate receipt details
+    const shopName = await getSetting('shopName') || 'Prestige Market';
+    const date = new Date(transaction.timestamp);
+    const dateStr = date.toLocaleDateString('tr-TR');
+    const timeStr = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    
+    // Update receipt elements
+    document.getElementById('receiptShopName').textContent = shopName;
+    document.getElementById('receiptDateTime').textContent = `${dateStr} — ${timeStr}`;
+    document.getElementById('receiptTotal').textContent = `₺${transaction.total.toFixed(2)}`;
+    document.getElementById('receiptPayment').textContent = transaction.paymentType === 'cash' ? '💵 Nakit' : '💳 Kart';
+    
+    // Populate items
+    const itemsContainer = document.getElementById('receiptItems');
+    itemsContainer.innerHTML = transaction.items.map(item => 
+      `<div style="display: flex; justify-content: space-between; padding: 4px 0;">
+        <span>${item.name}</span>
+        <span>₺${item.price.toFixed(2)}</span>
+      </div>`
+    ).join('');
+    
+    // Show receipt modal
+    receiptModal.classList.add('show');
+    
+  } catch (err) {
+    console.error('Receipt summary error:', err);
+    showToast('Fiş gösterilemedi', 'warning');
+  }
+}
+
 // ========================================
 // QR AND NEW SALE FUNCTIONS
 // ========================================
