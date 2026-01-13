@@ -1426,12 +1426,8 @@ async function closeDaySummary() {
       await updateTransaction(tx.id, { closedDayId: closedDayId });
     }
     
-    // CRITICAL FIX: Clear old business date
+    // CRITICAL FIX: Clear business date (next sale creates new one)
     localStorage.removeItem('currentBusinessDate');
-    
-    // CRITICAL FIX: Force UI reset - set NEW business date to TODAY
-    const today = getTodayDateStr();
-    localStorage.setItem('currentBusinessDate', today);
     
     // Show success
     showToast('✓ Gün kapatıldı. Yeni gün başladı.', 'success');
