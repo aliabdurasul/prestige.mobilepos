@@ -1204,8 +1204,10 @@ async function renderDailySummary() {
   // Check if day is already closed
   const isClosed = await isBusinessDateClosed(businessDate);
   
-  // Get today's transactions
-  const todayTx = await getTransactionsByBusinessDate(businessDate);
+  // Get today's transactions (ONLY unclosed ones)
+  const allTodayTx = await getTransactionsByBusinessDate(businessDate);
+  const todayTx = allTodayTx.filter(tx => tx.closedDayId === null || tx.closedDayId === undefined);
+  
   const yesterdayTx = await getTransactionsByBusinessDate(yesterday);
   
   // Calculate today's stats
