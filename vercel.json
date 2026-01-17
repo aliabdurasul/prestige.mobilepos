@@ -1,0 +1,18 @@
+{
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/build",
+  "routes": [
+    {
+      "src": "/pos.html",
+      "dest": "/pos.html"
+    },
+    {
+      "src": "/receipt.html",
+      "dest": "/receipt.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}

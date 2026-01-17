@@ -1089,6 +1089,12 @@ function getYesterdayDateStr() {
   return yesterday.toISOString().split('T')[0];
 }
 
+function getTomorrowDateStr() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return tomorrow.toISOString().split('T')[0];
+}
+
 function formatTurkishDate(dateStr) {
   const date = new Date(dateStr);
   const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
@@ -1431,8 +1437,8 @@ async function closeDaySummary() {
       await updateTransaction(tx.id, { closedDayId: closedDayId });
     }
     
-    // CRITICAL: Clear business date so next sale creates new date
-    localStorage.removeItem('currentBusinessDate');
+    // CRITICAL: Advance business date to next day so next sale creates new business date
+    localStorage.setItem('currentBusinessDate', getTomorrowDateStr());
     
     // Show success
     showToast('✓ Gün kapatıldı', 'success');
