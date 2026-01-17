@@ -1,21 +1,6 @@
 {
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/build",
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "routes": [
-    {
-      "src": "/pos.html",
-      "dest": "/pos.html"
-    },
-    {
-      "src": "/receipt.html",
-      "dest": "/receipt.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ]
+  "public": "frontend/public",
+  "buildCommand": "",
+  "outputDirectory": "frontend/public",
+  "framework": "static"
 }
